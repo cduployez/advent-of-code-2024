@@ -1,7 +1,7 @@
 import {DistanceUtils} from './distance-utils';
 import {PuzzleInput} from './puzzle-input';
 
-class Main {
+class Day1 {
     static part1(inputFile: string): number {
         const [leftList, rightList] = new PuzzleInput(inputFile).parse();
         return DistanceUtils.distanceSum(leftList, rightList);
@@ -13,7 +13,7 @@ class Main {
     }
 }
 
-console.log('Part 1 - Example: ', Main.part1('example-input.txt')); // 11
-console.log('Part 1 - Input: ', Main.part1('puzzle-input.txt')); // 1530215
-console.log('Part 2 - Example: ', Main.part2('example-input.txt')); // 31
-console.log('Part 2 - Input: ', Main.part2('puzzle-input.txt')); // 26800609
+console.log('Part 1 - Example: ', Day1.part1('example-input.txt')); // 11
+console.log('Part 1 - Input: ', Day1.part1('puzzle-input.txt')); // 1530215
+console.log('Part 2 - Example: ', Day1.part2('example-input.txt')); // 31
+console.log('Part 2 - Input: ', Day1.part2('puzzle-input.txt')); // 26800609
