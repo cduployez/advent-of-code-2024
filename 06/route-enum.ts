@@ -1,6 +1,10 @@
 export enum RouteEnum {
     WALL = '#',
+    OBSTACLE = 'O',
     EMPTY = '.',
-    VISITED = 'X',
-    OUT_OF_BOUNDS = 'O'
+    VISITED_TOP = ']',
+    VISITED_BOTTOM = '[',
+    VISITED_RIGHT = '—',
+    VISITED_LEFT = '-',
+    OUT_OF_BOUNDS = '%'
 }
