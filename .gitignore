@@ -1,4 +1,2 @@
 .idea
-puzzle-input.txt
-example-input.txt
-example-input2.txt
+*-input*.txt
