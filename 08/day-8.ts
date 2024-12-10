@@ -14,7 +14,7 @@ export class Antinode {
     antennas: [Antenna, Antenna];
     position: Coordinate;
 
-    constructor(antennas: [Antenna, Antenna], position: Coordinate) {
+    constructor(antennas: [Antenna, Antenna], position: Coordinate, readonly inline: boolean = false) {
         this.antennas = antennas;
         this.position = position;
     }
@@ -65,18 +65,18 @@ export class Board {
         this.antennas = antennas;
     }
 
-    generateAntinodes(): void {
-        this.antinodes = this.toAntinodes();
+    generateAntinodes(inline: boolean): void {
+        this.antinodes = this.toAntinodes(inline);
     }
 
-    toAntinodes(): Antinode[] {
+    toAntinodes(inline: boolean): Antinode[] {
         const antinodes: Antinode[] = [];
         Object.keys(this.antennaMap).forEach(key => {
             const antennas = this.antennaMap[key];
             if (antennas.length > 1) {
                 for (let i = 0; i < antennas.length; i++) {
                     for (let j = i + 1; j < antennas.length; j++) {
-                        antinodes.push(...this.toAntinodeForAntennas(antennas[i], antennas[j]));
+                        antinodes.push(...this.toAntinodeForAntennas(antennas[i], antennas[j], inline));
                     }
                 }
             }
@@ -86,24 +86,54 @@ export class Board {
             .filter((antinode, index, array) => array.findIndex(a => a.position.isEqualTo(antinode.position)) === index);
     }
 
-    toAntinodeForAntennas(antenna1: Antenna, antenna2: Antenna): Antinode[] {
+    toAntinodeForAntennas(antenna1: Antenna, antenna2: Antenna, inline: boolean): Antinode[] {
         const vectorCoordinate: Coordinate = this.getVectorCoordinates(antenna1.position, antenna2.position);
-        return [
-            new Antinode([antenna1, antenna2], antenna1.position.add(vectorCoordinate)),
-            new Antinode([antenna1, antenna2], antenna1.position.remove(vectorCoordinate)),
-            new Antinode([antenna1, antenna2], antenna2.position.add(vectorCoordinate)),
-            new Antinode([antenna1, antenna2], antenna2.position.remove(vectorCoordinate))
-        ]
+        const antinodes: Antinode[] = [];
+
+        // First case
+        let antinode = new Antinode([antenna1, antenna2], antenna1.position.add(vectorCoordinate));
+        antinodes.push(antinode);
+        while (inline && !antinode.position.isOutOfBounds(this.width, this.height)) {
+            antinode = new Antinode([antenna1, antenna2], antinode.position.add(vectorCoordinate), true);
+            antinodes.push(antinode);
+        }
+
+        // Second case
+        antinode = new Antinode([antenna1, antenna2], antenna1.position.remove(vectorCoordinate));
+        antinodes.push(antinode);
+        while (inline && !antinode.position.isOutOfBounds(this.width, this.height)) {
+            antinode = new Antinode([antenna1, antenna2], antinode.position.remove(vectorCoordinate), true);
+            antinodes.push(antinode);
+        }
+
+        // Third case
+        antinode = new Antinode([antenna1, antenna2], antenna2.position.add(vectorCoordinate));
+        antinodes.push(antinode);
+        while (inline && !antinode.position.isOutOfBounds(this.width, this.height)) {
+            antinode = new Antinode([antenna1, antenna2], antinode.position.add(vectorCoordinate), true);
+            antinodes.push(antinode);
+        }
+
+        // Fourth case
+        antinode = new Antinode([antenna1, antenna2], antenna2.position.remove(vectorCoordinate));
+        antinodes.push(antinode);
+        while (inline && !antinode.position.isOutOfBounds(this.width, this.height)) {
+            antinode = new Antinode([antenna1, antenna2], antinode.position.remove(vectorCoordinate), true);
+            antinodes.push(antinode);
+        }
+        return antinodes
             // Remove antinodes at antenna 1 or antenna 2 locations
-            .filter(antinode => !antenna1.position.isEqualTo(antinode.position) && !antenna2.position.isEqualTo(antinode.position))
+            .filter(antinode => inline || (!antenna1.position.isEqualTo(antinode.position) && !antenna2.position.isEqualTo(antinode.position)))
             // Remove antinodes out of bounds
-            .filter(antinode => !antinode.position.isOutOfBounds(this.width, this.height))
+            .filter(antinode => !antinode.position.isOutOfBounds(this.width, this.height));
     }
 
     displayBoard(): void {
+        console.log('');
         for (let y = 0; y < this.height; y++) {
             console.log(this.toBoardRow(y));
         }
+        console.log('');
     }
 
     getAntennaAt(x: number, y: number): Antenna | undefined {
@@ -158,22 +188,28 @@ class Day8 {
         const board = new BoardInput(inputFilePath).parse();
         board.displayBoard();
         board.generateAntinodes();
-        board.displayBoard();
         // console.log(board.antinodes.map(a => `Antinode at (${a.position.x}, ${a.position.y}) for Antennas ${a.antennas[0].name} and ${a.antennas[1].name}`));
+        board.displayBoard();
         return board.antinodes.length;
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const board = new BoardInput(inputFilePath).parse();
+        board.displayBoard();
+        board.generateAntinodes(true);
+        // console.log(board.antinodes.map(a => `Antinode at (${a.position.x}, ${a.position.y}) for Antennas ${a.antennas[0].name} and ${a.antennas[1].name}`));
+        board.displayBoard();
+        return board.antinodes.length;
     }
 }
 
 const startTime = performance.now();
-// console.log('Part 1 - Example: ', Day8.part1('simple-input.txt')); // 2
-// console.log('Part 1 - Example: ', Day8.part1('example-input.txt')); // 14
+console.log('Part 1 - Tutorial: ', Day8.part1('part1-tutorial-input.txt')); // 2
+console.log('Part 1 - Example: ', Day8.part1('example-input.txt')); // 14
 console.log('Part 1 - Input: ', Day8.part1('puzzle-input.txt')); // 303
-// console.log('Part 2 - Example: ', Day8.part2('example-input.txt')); //
-// console.log('Part 2 - Input: ', Day8.part2('puzzle-input.txt')); //
+console.log('Part 2 - Tutorial: ', Day8.part2('part2-tutorial-input.txt')); // 9
+console.log('Part 2 - Example: ', Day8.part2('example-input.txt')); // 34
+console.log('Part 2 - Input: ', Day8.part2('puzzle-input.txt')); // 1045
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
