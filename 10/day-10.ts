@@ -14,15 +14,25 @@ export class Position {
 
 export class Trailhead {
     position: Position;
+
+    /* Number of reachable '9' */
     score: number;
 
-    constructor(position: Position, score: number = 0) {
+    /* Number of distinct hiking trails */
+    rating: number;
+
+    constructor(position: Position, score: number = 0, rating: number = 0) {
         this.position = position;
         this.score = score;
+        this.rating = rating;
     }
 
-    static sum(trailheads: Trailhead[]): number {
+    static sumScore(trailheads: Trailhead[]): number {
         return trailheads.reduce((sum, trailhead) => sum + trailhead.score, 0);
+    }
+
+    static sumRating(trailheads: Trailhead[]): number {
+        return trailheads.reduce((sum, trailhead) => sum + trailhead.rating, 0);
     }
 }
 
@@ -70,11 +80,12 @@ export class TopographicMap {
                 nextPositions.push(...this.findNextTrailPosition(currentValue, position));
             });
             currentValue++;
-            positions = nextPositions
-                // Remove non-unique positions
-                .filter((position, index, array) => array.findIndex(p => p.x === position.x && p.y === position.y) === index);
+            positions = nextPositions;
         }
-        return new Trailhead(position, positions.length);
+        return new Trailhead(position,
+            // Remove non-unique positions to count score
+            positions.filter((position, index, array) => array.findIndex(p => p.x === position.x && p.y === position.y) === index).length,
+            positions.length);
     }
 
     findNextTrailPosition(currentValue: number, currentPosition: Position): Position[] {
@@ -114,23 +125,30 @@ class Day10 {
         topographicMap.displayMap();
         const trailheads = topographicMap.findTrailheads();
         console.log(trailheads);
-        return Trailhead.sum(trailheads);
+        return Trailhead.sumScore(trailheads);
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const topographicMap = new TopographicMapInput(inputFilePath).parse();
+        topographicMap.displayMap();
+        const trailheads = topographicMap.findTrailheads();
+        console.log(trailheads);
+        return Trailhead.sumRating(trailheads);
     }
 }
 
 const startTime = performance.now();
-// console.log('Part 1 - Example: ', Day10.part1('example-input.txt')); // 1
-// console.log('Part 1 - Example: ', Day10.part1('example-input2.txt')); // 2
-// console.log('Part 1 - Example: ', Day10.part1('example-input3.txt')); // 4
-// console.log('Part 1 - Example: ', Day10.part1('example-input4.txt')); // 3
-// console.log('Part 1 - Example: ', Day10.part1('example-input5.txt')); // 3
-console.log('Part 1 - Input: ', Day10.part1('puzzle-input.txt')); //
-// console.log('Part 2 - Example: ', Day10.part2('example-input.txt')); //
-// console.log('Part 2 - Input: ', Day10.part2('puzzle-input.txt')); //
+console.log('Part 1 - Example: ', Day10.part1('example-input.txt')); // 1
+console.log('Part 1 - Example: ', Day10.part1('example-input2.txt')); // 2
+console.log('Part 1 - Example: ', Day10.part1('example-input3.txt')); // 4
+console.log('Part 1 - Example: ', Day10.part1('example-input4.txt')); // 3
+console.log('Part 1 - Example: ', Day10.part1('example-input5.txt')); // 3
+console.log('Part 1 - Input: ', Day10.part1('puzzle-input.txt')); // 617
+console.log('Part 2 - Example: ', Day10.part2('example-part2-input.txt')); // 3
+console.log('Part 2 - Example: ', Day10.part2('example-part2-input2.txt')); // 13
+console.log('Part 2 - Example: ', Day10.part2('example-part2-input3.txt')); // 227
+console.log('Part 2 - Example: ', Day10.part2('example-part2-input4.txt')); // 81
+console.log('Part 2 - Input: ', Day10.part2('puzzle-input.txt')); // 1477
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
