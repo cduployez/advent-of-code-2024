@@ -68,24 +68,6 @@ class Region {
         });
     }
 
-    /**
-     * Add at the right position in the array
-     */
-
-    /*    add(plant: Plant): void {
-            const x = plant.position.x - this.startPosition.x;
-            const y = plant.position.y - this.startPosition.y;
-            while (y >= this.plants.length) {
-                this.plants.push([]);
-            }
-
-            while (x >= this.plants[y].length) {
-                this.plants[y].push(null);
-            }
-
-            this.plants[y][x] = plant;
-        }*/
-
     getTopPlant(x: number, y: number): Plant | null {
         if (y > 0) {
             return this.plantMap[y - 1][x];
@@ -93,9 +75,37 @@ class Region {
         return null;
     }
 
+    getDiagonalTopRightPlant(x: number, y: number): Plant | null {
+        if (y > 0 && x < this.plantMap[y].length - 1) {
+            return this.plantMap[y - 1][x + 1];
+        }
+        return null;
+    }
+
+    getDiagonalTopLeftPlant(x: number, y: number): Plant | null {
+        if (y > 0 && x > 0) {
+            return this.plantMap[y - 1][x - 1];
+        }
+        return null;
+    }
+
     getBottomPlant(x: number, y: number): Plant | null {
         if (y < this.plantMap.length - 1) {
             return this.plantMap[y + 1][x];
+        }
+        return null;
+    }
+
+    getDiagonalBottomRightPlant(x: number, y: number): Plant | null {
+        if (y < this.plantMap.length - 1 && x < this.plantMap[y].length - 1) {
+            return this.plantMap[y + 1][x + 1];
+        }
+        return null;
+    }
+
+    getDiagonalBottomLeftPlant(x: number, y: number): Plant | null {
+        if (y < this.plantMap.length - 1 && x > 0) {
+            return this.plantMap[y + 1][x - 1];
         }
         return null;
     }
@@ -117,16 +127,130 @@ class Region {
     display(): void {
         this.plantMap.forEach(row => {
             console.log(row.map(p => p?.plantType || '.').join(''));
-        })
-        console.log(`A region of ${this.unorderedPlants.values().next().value?.plantType} plants with price ${this.area()} * ${this.perimeter()} = ${this.price()}.`);
+        });
+        const area = this.area();
+        const perimeter = this.perimeter();
+        const nbSides = this.nbSides();
+        console.log(`Region of ${this.unorderedPlants.values().next().value?.plantType} plants with price ${area} * ${perimeter} = ${area * perimeter}.`);
+        console.log(`Region of ${this.unorderedPlants.values().next().value?.plantType} plants with discount ${area} * ${nbSides} = ${area * nbSides}.`);
     }
 
     price(): number {
         return this.perimeter() * this.area();
     }
 
+    discount(): number {
+        return this.nbSides() * this.area();
+    }
+
     area(): number {
         return this.unorderedPlants.size;
+    }
+
+    isSameCorner(x: number, y: number, previousCornerPositions: Position[]): boolean {
+        return previousCornerPositions.some(p => p.x === x && p.y === y);
+    }
+
+    isSameDiagonalTopLeftPlant(plant: Plant | null, x: number, y: number): boolean {
+        return this.getDiagonalTopLeftPlant(x, y)?.plantType === plant?.plantType;
+    }
+
+    isSameDiagonalTopRightPlant(plant: Plant | null, x: number, y: number): boolean {
+        return this.getDiagonalTopRightPlant(x, y)?.plantType === plant?.plantType;
+    }
+
+    isSameDiagonalBottomLeftPlant(plant: Plant | null, x: number, y: number): boolean {
+        return this.getDiagonalBottomLeftPlant(x, y)?.plantType === plant?.plantType;
+    }
+
+    isSameDiagonalBottomRightPlant(plant: Plant | null, x: number, y: number): boolean {
+        return this.getDiagonalBottomRightPlant(x, y)?.plantType === plant?.plantType;
+    }
+
+    /* Count corners in 2D between plants and nulls */
+    nbSides(): number {
+        let nbCorners = 0;
+        let previousCornerPositions: Position[] = [];
+        this.plantMap.forEach((row, y) => {
+            row.forEach((plant, x) => {
+                if (plant) {
+                    if (!this.getTopPlant(x, y) && !this.getLeftPlant(x, y) && (!this.isSameCorner(x, y, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x, y));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x}, ${y} for plant ${plant.plantType} at ${x}, ${y}`);
+                        if (this.isSameDiagonalTopLeftPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal top left for plant ${plant.plantType} at ${x}, ${y}`);
+                        }
+                    }
+                    if (!this.getTopPlant(x, y) && !this.getRightPlant(x, y) && (!this.isSameCorner(x +1, y, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x + 1, y));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x + 1}, ${y} for plant ${plant.plantType} at ${x}, ${y}`);
+                        if (this.isSameDiagonalTopRightPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal top right for plant ${plant.plantType} at ${x}, ${y}`);
+                        }
+                    }
+                    if (!this.getBottomPlant(x, y) && !this.getLeftPlant(x, y) && (!this.isSameCorner(x, y + 1, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x, y + 1));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x}, ${y + 1} for plant ${plant.plantType} at ${x}, ${y}`);
+                        if (this.isSameDiagonalBottomLeftPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal bottom left for plant ${plant.plantType} at ${x}, ${y}`);
+                        }
+                    }
+                    if (!this.getBottomPlant(x, y) && !this.getRightPlant(x, y) && (!this.isSameCorner(x + 1, y + 1, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x + 1, y + 1));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x + 1}, ${y + 1} for plant ${plant.plantType} at ${x}, ${y}`);
+                        if (this.isSameDiagonalBottomRightPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal bottom right for plant ${plant.plantType} at ${x}, ${y}`);
+                        }
+                    }
+                } else if (!plant) {
+                    if (this.getTopPlant(x, y) && this.getLeftPlant(x, y) && (!this.isSameCorner(x, y, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x, y));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x}, ${y} for plant ${null} at ${x}, ${y}`);
+                        if (this.isSameDiagonalTopLeftPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal top left for plant ${null} at ${x}, ${y}`);
+                        }
+                    }
+                    if (this.getTopPlant(x, y) && this.getRightPlant(x, y) && (!this.isSameCorner(x + 1, y, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x + 1, y));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x + 1}, ${y} for plant ${null} at ${x}, ${y}`);
+                        if (this.isSameDiagonalTopRightPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal top right for plant ${null} at ${x}, ${y}`);
+                        }
+                    }
+                    if (this.getBottomPlant(x, y) && this.getLeftPlant(x, y) && (!this.isSameCorner(x, y + 1, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x, y + 1));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x}, ${y + 1} for plant ${null} at ${x}, ${y}`);
+                        if (this.isSameDiagonalBottomLeftPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal bottom left for plant ${null} at ${x}, ${y}`);
+                        }
+                    }
+                    if (this.getBottomPlant(x, y) && this.getRightPlant(x, y) && (!this.isSameCorner(x + 1, y + 1, previousCornerPositions))) {
+                        previousCornerPositions.push(new Position(x + 1, y + 1));
+                        nbCorners++;
+                        // console.log(`Adding corner at ${x + 1}, ${y + 1} for plant ${null} at ${x}, ${y}`);
+                        if (this.isSameDiagonalBottomRightPlant(plant, x, y)) {
+                            nbCorners++;
+                            // console.log(`Counting twice for diagonal bottom right for plant ${null} at ${x}, ${y}`);
+                        }
+                    }
+                }
+            });
+        });
+        return nbCorners;
     }
 
     perimeter(): number {
@@ -166,7 +290,7 @@ class GardenPlotMap {
         if (plant.position.y > 0) {
             return this.plants[plant.position.y - 1][plant.position.x];
         }
-        return null
+        return null;
     }
 
     getLeftPlant(plant: Plant): Plant | null {
@@ -227,15 +351,19 @@ class GardenPlotMap {
         });
     }
 
+    totalPrice(): number {
+        return this.regions.reduce((acc, region) => acc + region.price(), 0);
+    }
+
+    totalDiscount() {
+        return this.regions.reduce((acc, region) => acc + region.discount(), 0);
+    }
+
     private addToRegion(plant: Plant, region: Region | null, regions: Record<number, Region>): Region {
         region = region || new Region();
         region.addUnorderedPlant(plant);
         regions[region.id] = region;
         return region;
-    }
-
-    totalPrice(): number {
-        return this.regions.reduce((acc, region) => acc + region.price(), 0);
     }
 }
 
@@ -263,20 +391,28 @@ class GardenPlotMapInput extends Input<GardenPlotMap> {
 class Day12 {
     static part1(inputFilePath: string): number {
         const gardenPlotMap = new GardenPlotMapInput(inputFilePath).parse();
-        gardenPlotMap.displayRegions();
+        // gardenPlotMap.displayRegions();
         return gardenPlotMap.totalPrice();
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const gardenPlotMap = new GardenPlotMapInput(inputFilePath).parse();
+        // gardenPlotMap.displayRegions();
+        return gardenPlotMap.totalDiscount();
     }
 }
 
 const startTime = performance.now();
-// console.log('Part 1 - Example: ', Day12.part1('example-input.txt')); // 140
-// console.log('Part 1 - Example: ', Day12.part1('example-input2.txt')); // 772
-// console.log('Part 1 - Example: ', Day12.part1('example-input3.txt')); // 1930
-console.log('Part 1 - Puzzle: ', Day12.part1('puzzle-input.txt'));
+console.log('Part 1 - Example: ', Day12.part1('example-input.txt')); // 140
+console.log('Part 1 - Example: ', Day12.part1('example-input2.txt')); // 772
+console.log('Part 1 - Example: ', Day12.part1('example-input3.txt')); // 1930
+console.log('Part 1 - Puzzle: ', Day12.part1('puzzle-input.txt')); // 1396562
+console.log('Part 1 - Example: ', Day12.part2('example-input.txt')); // 80
+console.log('Part 1 - Example: ', Day12.part2('example-input2.txt')); // 436
+console.log('Part 1 - Example: ', Day12.part2('example-input4.txt')); // 236
+console.log('Part 1 - Example: ', Day12.part2('example-input5.txt')); // 368
+console.log('Part 1 - Example: ', Day12.part2('example-input3.txt')); // 1206
+console.log('Part 1 - Puzzle: ', Day12.part2('puzzle-input.txt')); // 844132
 
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
