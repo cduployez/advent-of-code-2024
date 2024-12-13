@@ -1,13 +1,5 @@
 import {Input} from '../input';
 
-enum PlantEnum {
-    A = 'A',
-    B = 'B',
-    C = 'C',
-    D = 'D',
-    E = 'E'
-}
-
 class Position {
     x: number;
     y: number;
@@ -21,12 +13,12 @@ class Position {
 class Plant {
     static globalId: number = 0;
     readonly id: number = Plant.globalId++;
-    plantEnum: PlantEnum;
+    plantType: string;
     position: Position;
     region: Region | null = null;
 
-    constructor(plantEnum: PlantEnum, position: Position) {
-        this.plantEnum = plantEnum;
+    constructor(plantType: string, position: Position) {
+        this.plantType = plantType;
         this.position = position;
     }
 }
@@ -42,8 +34,19 @@ class Region {
     }
 
     addUnorderedPlant(plant: Plant): void {
+        if (plant.region !== null && plant.region !== this) {
+            this.mergeOtherRegionIntoThis(plant.region);
+        }
         this.unorderedPlants.add(plant);
         plant.region = this;
+    }
+
+    mergeOtherRegionIntoThis(region: Region): void {
+        region.unorderedPlants.forEach(plant => {
+            plant.region = this;
+            region.unorderedPlants.delete(plant);
+            this.addUnorderedPlant(plant);
+        });
     }
 
     generatePlantMap(): void {
@@ -113,12 +116,20 @@ class Region {
 
     display(): void {
         this.plantMap.forEach(row => {
-            console.log(row.map(p => p?.plantEnum || '.').join(''));
+            console.log(row.map(p => p?.plantType || '.').join(''));
         })
-        console.log('Count: ', this.countAbsentNeighbors());
+        console.log(`A region of ${this.unorderedPlants.values().next().value?.plantType} plants with price ${this.area()} * ${this.perimeter()} = ${this.price()}.`);
     }
 
-    countAbsentNeighbors(): number {
+    price(): number {
+        return this.perimeter() * this.area();
+    }
+
+    area(): number {
+        return this.unorderedPlants.size;
+    }
+
+    perimeter(): number {
         let count = 0;
         this.plantMap.forEach((row, y) => {
             row.forEach((plant, x) => {
@@ -188,24 +199,24 @@ class GardenPlotMap {
                     this.addToRegion(plant, plant.region, regionRecord);
                 }
                 const topPlant = this.getTopPlant(plant);
-                if (topPlant?.plantEnum === plant.plantEnum) {
+                if (topPlant?.plantType === plant.plantType) {
                     this.addToRegion(topPlant, plant.region, regionRecord);
                 }
                 const leftPlant = this.getLeftPlant(plant);
-                if (leftPlant?.plantEnum === plant.plantEnum) {
+                if (leftPlant?.plantType === plant.plantType) {
                     this.addToRegion(leftPlant, plant.region, regionRecord);
                 }
                 const rightPlant = this.getRightPlant(plant);
-                if (rightPlant?.plantEnum === plant.plantEnum) {
+                if (rightPlant?.plantType === plant.plantType) {
                     this.addToRegion(rightPlant, plant.region, regionRecord);
                 }
                 const bottomPlant = this.getBottomPlant(plant);
-                if (bottomPlant?.plantEnum === plant.plantEnum) {
+                if (bottomPlant?.plantType === plant.plantType) {
                     this.addToRegion(bottomPlant, plant.region, regionRecord);
                 }
             }
         }
-        const regions = Object.values(regionRecord);
+        const regions = Object.values(regionRecord).filter(r => r.unorderedPlants.size > 0);
         regions.forEach(r => r.generatePlantMap());
         return regions;
     }
@@ -238,6 +249,10 @@ class GardenPlotMap {
         regions[region.id] = region;
         return region;
     }
+
+    totalPrice(): number {
+        return this.regions.reduce((acc, region) => acc + region.price(), 0);
+    }
 }
 
 class GardenPlotMapInput extends Input<GardenPlotMap> {
@@ -248,9 +263,9 @@ class GardenPlotMapInput extends Input<GardenPlotMap> {
             const line = lines[y];
             const row: Plant[] = [];
             for (let x = 0; x < line.length; x++) {
-                const plantEnum = line[x] as PlantEnum;
-                if (plantEnum) {
-                    row.push(new Plant(plantEnum, new Position(x, y)));
+                const plantType = line[x];
+                if (plantType) {
+                    row.push(new Plant(plantType, new Position(x, y)));
                 }
             }
             plants.push(row);
@@ -265,7 +280,7 @@ class Day12 {
     static part1(inputFilePath: string): number {
         const gardenPlotMap = new GardenPlotMapInput(inputFilePath).parse();
         gardenPlotMap.displayRegions();
-        return 0;
+        return gardenPlotMap.totalPrice();
     }
 
     static part2(inputFilePath: string): number {
@@ -274,7 +289,10 @@ class Day12 {
 }
 
 const startTime = performance.now();
-console.log('Part 1 - Example: ', Day12.part1('example-input.txt')); //
+// console.log('Part 1 - Example: ', Day12.part1('example-input.txt')); // 140
+// console.log('Part 1 - Example: ', Day12.part1('example-input2.txt')); // 772
+console.log('Part 1 - Example: ', Day12.part1('example-input3.txt')); //
+
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
