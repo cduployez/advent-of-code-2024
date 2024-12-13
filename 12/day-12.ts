@@ -221,22 +221,6 @@ class GardenPlotMap {
         return regions;
     }
 
-    /**
-     * Display with format:
-     * +-+-+-+-+
-     * |A A A A|
-     * +-+-+-+-+     +-+
-     *               |D|
-     * +-+-+   +-+   +-+
-     * |B B|   |C|
-     * +   +   + +-+
-     * |B B|   |C C|
-     * +-+-+   +-+ +
-     *           |C|
-     * +-+-+-+   +-+
-     * |E E E|
-     * +-+-+-+
-     */
     displayRegions(): void {
         this.regions.forEach(region => {
             region.display();
@@ -291,7 +275,8 @@ class Day12 {
 const startTime = performance.now();
 // console.log('Part 1 - Example: ', Day12.part1('example-input.txt')); // 140
 // console.log('Part 1 - Example: ', Day12.part1('example-input2.txt')); // 772
-console.log('Part 1 - Example: ', Day12.part1('example-input3.txt')); //
+// console.log('Part 1 - Example: ', Day12.part1('example-input3.txt')); // 1930
+console.log('Part 1 - Puzzle: ', Day12.part1('puzzle-input.txt'));
 
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
