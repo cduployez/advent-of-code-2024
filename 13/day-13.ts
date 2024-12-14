@@ -91,14 +91,15 @@ class Machine {
         const yEquation = new Equation(this.a.vectorPosition.y, this.b.vectorPosition.y, this.prizePosition.y);
         const doubleEquation = new DoubleEquation(xEquation, yEquation);
         const {a, b} = doubleEquation.solve();
-        console.log(`A: ${a}, B: ${b}`);
+        const ok = MathUtils.isRound(a) && MathUtils.isRound(b);
+        console.log(`[${ok ? 'OK' : '--'}] A: ${a}, B: ${b}`);
         return {nbA: a, nbB: b};
     }
 
-    getNbTokens(maxNbA: number, maxNbB: number): number {
+    getNbTokens(maxNbA: number | null, maxNbB: number | null): number {
         const nbMoves = this.solve();
         if (MathUtils.isRound(nbMoves.nbA) && MathUtils.isRound(nbMoves.nbB)) {
-            if (nbMoves.nbA > maxNbA || nbMoves.nbB > maxNbB) {
+            if (maxNbA && maxNbB && (nbMoves.nbA > maxNbA || nbMoves.nbB > maxNbB)) {
                 return 0;
             }
             return nbMoves.nbA * this.a.nbTokens + nbMoves.nbB * this.b.nbTokens;
@@ -106,7 +107,7 @@ class Machine {
         return 0;
     }
 
-    static getTotalTokens(machines: Machine[], maxNbA: number, maxNbB: number): number {
+    static getTotalTokens(machines: Machine[], maxNbA: number | null, maxNbB: number | null): number {
         return machines.reduce((acc, machine) => acc + machine.getNbTokens(maxNbA, maxNbB), 0);
     }
 }
@@ -162,14 +163,21 @@ class Day13 {
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const machines = new MachinesInput(inputFilePath).parse();
+        machines.forEach(machine => {
+            machine.prizePosition.x += 10000000000000;
+            machine.prizePosition.y += 10000000000000;
+        })
+        return Machine.getTotalTokens(machines, null, null);
     }
 }
 
 const startTime = performance.now();
 // console.log('Part 1 - Example: ', Day13.part1('simple-input.txt')); // 280
 // console.log('Part 1 - Example: ', Day13.part1('example-input.txt')); // 480
-console.log('Part 1 - Input: ', Day13.part1('puzzle-input.txt')); // 26005
+// console.log('Part 1 - Input: ', Day13.part1('puzzle-input.txt')); // 26005
+// console.log('Part 2 - Example: ', Day13.part2('example-input.txt')); // 875318608908
+console.log('Part 2 - Input: ', Day13.part2('puzzle-input.txt')); // 105620095782547
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
