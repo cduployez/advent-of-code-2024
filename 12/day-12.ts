@@ -1,14 +1,5 @@
 import {Input} from '../input';
-
-class Position {
-    x: number;
-    y: number;
-
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-}
+import {Position} from '../position';
 
 class Plant {
     static globalId: number = 0;
