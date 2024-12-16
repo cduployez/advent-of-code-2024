@@ -20,7 +20,7 @@ class DayXX {
 const startTime = performance.now();
 console.log('Part 1 - Example: ', DayXX.part1('example-input.txt')); //
 // console.log('Part 1 - Input: ', DayXX.part1('puzzle-input.txt')); //
-// console.log('Part 2 - Input: ', DayXX.part2('exqmple-input.txt')); //
+// console.log('Part 2 - Input: ', DayXX.part2('example-input.txt')); //
 // console.log('Part 2 - Input: ', DayXX.part2('puzzle-input.txt')); //
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
