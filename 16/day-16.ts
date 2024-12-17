@@ -267,7 +267,7 @@ class Maze {
         let nbLoops: number = 0;
         const scores: number[] = [];
         while (this.reindeers.length > 0) {
-            const reindeer = this.reindeers.shift()!;
+            const reindeer = this.reindeers.pop()!;
             const directionOptions = reindeer.findOptions(this.grid);
             if (directionOptions.length === 0) {
                 // console.log(`Dead end at position (${reindeer.position.x}, ${reindeer.position.y}) with direction ${reindeer.direction}`);
@@ -340,9 +340,9 @@ class Day16 {
 }
 
 const startTime = performance.now();
-console.log('Part 1 - Example: ', Day16.part1('example-input.txt')); // 7036
+// console.log('Part 1 - Example: ', Day16.part1('example-input.txt')); // 7036
 // console.log('Part 1 - Example2: ', Day16.part1('example-input2.txt')); // 11048
-// console.log('Part 1 - Puzzle: ', Day16.part1('puzzle-input.txt')); //
+console.log('Part 1 - Puzzle: ', Day16.part1('puzzle-input.txt')); //
 // console.log('Part 2 - Example: ', Day16.part2('example-input.txt')); //
 // console.log('Part 2 - Puzzle: ', Day16.part2('puzzle-input.txt')); //
 const endTime = performance.now();
