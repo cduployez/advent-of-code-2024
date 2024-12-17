@@ -18,6 +18,10 @@ enum DirectionEnum {
 
 const DIRECTIONS = [DirectionEnum.EAST, DirectionEnum.SOUTH, DirectionEnum.WEST, DirectionEnum.NORTH];
 
+class Cache {
+    static takenPathScores: number[][] = [];
+}
+
 class Path {
     position: Position;
     direction: DirectionEnum;
@@ -43,6 +47,10 @@ class Reindeer {
         this.score = score;
     }
 
+    get lastTakenPaths(): Path[] {
+        return this.takenPathsArray[this.takenPathsArray.length - 1];
+    }
+
     displayPath(maze: Maze) {
         const grid: string[][] = maze.grid.map(row => row.map(cell => cell));
         grid[maze.startPosition.y][maze.startPosition.x] = CellEnum.START;
@@ -55,10 +63,6 @@ class Reindeer {
         }
         console.log('');
         grid.forEach(row => console.log(row.join('')));
-    }
-
-    get lastTakenPaths(): Path[] {
-        return this.takenPathsArray[this.takenPathsArray.length - 1];
     }
 
     findOptions(grid: CellEnum[][]): DirectionEnum[] {
@@ -280,11 +284,14 @@ class Maze {
                         scores.push(reindeer.score);
                         console.log(`Reached end position with score ${reindeer.score}`);
                         // reindeer.displayPath(this);
+                    } else if (Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x] !== null && newReindeer.score >= Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x]) {
+                        console.log(`Giving up path at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}, which is higher than current score ${Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x]}`);
                     } else if (scores.length === 0 || newReindeer.score < Math.min(...scores)) {
                         if (nbLoops % 10000 === 0) {
                             console.log(`Reindeer is at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
                             // newReindeer.displayPath(this);
                         }
+                        Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x] = newReindeer.score;
                         this.reindeers.push(newReindeer);
                     } else {
                         console.log(`Search stopped with score ${newReindeer.score} at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction}`);
@@ -322,6 +329,7 @@ class MazeInput extends Input<Maze> {
             });
             grid.push(row);
         });
+        Cache.takenPathScores = grid.map(row => row.map(() => Infinity));
         return new Maze(grid, startPosition!, endPosition!, DirectionEnum.EAST);
     }
 }
