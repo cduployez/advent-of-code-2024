@@ -6,4 +6,8 @@ export class Position {
         this.x = x;
         this.y = y;
     }
+
+    copy(): Position {
+        return new Position(this.x, this.y);
+    }
 }
