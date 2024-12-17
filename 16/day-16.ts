@@ -33,12 +33,13 @@ class Reindeer {
     position: Position;
     direction: DirectionEnum;
     score: number;
-    takenPaths: Path[];
+    takenPathsArray: Path[][];
 
-    constructor(position: Position, direction: DirectionEnum = DirectionEnum.EAST, takenPaths: Path[], score: number = 0) {
+    constructor(position: Position, direction: DirectionEnum = DirectionEnum.EAST, takenPathsArray: Path[][], score: number = 0) {
         this.position = position;
         this.direction = direction;
-        this.takenPaths = takenPaths;
+        this.takenPathsArray = takenPathsArray;
+        takenPathsArray.push([]);
         this.score = score;
     }
 
@@ -47,29 +48,31 @@ class Reindeer {
         grid[maze.startPosition.y][maze.startPosition.x] = CellEnum.START;
         grid[maze.endPosition.y][maze.endPosition.x] = CellEnum.END;
         grid[this.position.y][this.position.x] = CellEnum.REINDEER;
-        for (const takenPath of this.takenPaths) {
-            grid[takenPath.position.y][takenPath.position.x] = takenPath.direction;
+        for (const takenPaths of this.takenPathsArray) {
+            for (const takenPath of takenPaths) {
+                grid[takenPath.position.y][takenPath.position.x] = takenPath.direction;
+            }
         }
         console.log('');
         grid.forEach(row => console.log(row.join('')));
     }
 
-    lastTakenPathIsOppositeDirection(direction: DirectionEnum): boolean {
-        return this.takenPaths.length > 0 && this.takenPaths[this.takenPaths.length - 1].direction === this.oppositeDirection(direction);
+    get lastTakenPaths(): Path[] {
+        return this.takenPathsArray[this.takenPathsArray.length - 1];
     }
 
     findOptions(grid: CellEnum[][]): DirectionEnum[] {
         const options: DirectionEnum[] = [];
-        if (this.canMoveEast(grid) && !this.lastTakenPathIsOppositeDirection(DirectionEnum.EAST)) {
+        if (this.canMoveEast(grid)) {
             options.push(DirectionEnum.EAST);
         }
-        if (this.canMoveWest(grid) && !this.lastTakenPathIsOppositeDirection(DirectionEnum.WEST)) {
+        if (this.canMoveWest(grid)) {
             options.push(DirectionEnum.WEST);
         }
-        if (this.canMoveNorth(grid) && !this.lastTakenPathIsOppositeDirection(DirectionEnum.NORTH)) {
+        if (this.canMoveNorth(grid)) {
             options.push(DirectionEnum.NORTH);
         }
-        if (this.canMoveSouth(grid) && !this.lastTakenPathIsOppositeDirection(DirectionEnum.SOUTH)) {
+        if (this.canMoveSouth(grid)) {
             options.push(DirectionEnum.SOUTH);
         }
         return options;
@@ -94,54 +97,64 @@ class Reindeer {
         }
     }
 
+    findPath(x: number, y: number): Path | undefined {
+        for (let takenPaths of this.takenPathsArray) {
+            for (let takenPath of takenPaths) {
+                if (takenPath.position.x === x && takenPath.position.y === y) {
+                    return takenPath;
+                }
+            }
+        }
+    }
+
     canMoveEast(grid: CellEnum[][]): boolean {
         return this.position.x + 1 < grid[this.position.x].length &&
             grid[this.position.y][this.position.x + 1] !== CellEnum.WALL &&
-            this.takenPaths.find(p => p.position.x === this.position.x + 1 && p.position.y === this.position.y) === undefined;
+            this.findPath(this.position.x + 1, this.position.y) === undefined;
     }
 
     canMoveWest(grid: CellEnum[][]): boolean {
         return this.position.x - 1 >= 0 &&
             grid[this.position.y][this.position.x - 1] !== CellEnum.WALL &&
-            this.takenPaths.find(p => p.position.x === this.position.x - 1 && p.position.y === this.position.y) === undefined;
+            this.findPath(this.position.x - 1, this.position.y) === undefined;
     }
 
     canMoveNorth(grid: CellEnum[][]): boolean {
         return this.position.y - 1 >= 0 &&
             grid[this.position.y - 1][this.position.x] !== CellEnum.WALL &&
-            this.takenPaths.find(p => p.position.x === this.position.x && p.position.y === this.position.y - 1) === undefined;
+            this.findPath(this.position.x, this.position.y - 1) === undefined;
     }
 
     canMoveSouth(grid: CellEnum[][]): boolean {
         return this.position.y + 1 < grid.length &&
             grid[this.position.y + 1][this.position.x] !== CellEnum.WALL &&
-            this.takenPaths.find(p => p.position.x === this.position.x && p.position.y === this.position.y + 1) === undefined;
+            this.findPath(this.position.x, this.position.y + 1) === undefined;
     }
 
     moveEast(): void {
         this.direction = DirectionEnum.EAST;
-        this.takenPaths.push(new Path(this.position, this.direction));
+        this.lastTakenPaths.push(new Path(this.position, this.direction));
         this.position.x++;
         this.score++;
     }
 
     moveWest(): void {
         this.direction = DirectionEnum.WEST;
-        this.takenPaths.push(new Path(this.position, this.direction));
+        this.lastTakenPaths.push(new Path(this.position, this.direction));
         this.position.x--;
         this.score++;
     }
 
     moveNorth(): void {
         this.direction = DirectionEnum.NORTH;
-        this.takenPaths.push(new Path(this.position, this.direction));
+        this.lastTakenPaths.push(new Path(this.position, this.direction));
         this.position.y--;
         this.score++;
     }
 
     moveSouth(): void {
         this.direction = DirectionEnum.SOUTH;
-        this.takenPaths.push(new Path(this.position, this.direction));
+        this.lastTakenPaths.push(new Path(this.position, this.direction));
         this.position.y++;
         this.score++;
     }
@@ -195,7 +208,7 @@ class Reindeer {
     }
 
     copy() {
-        return new Reindeer(this.position.copy(), this.direction, this.takenPaths.map(p => new Path(p.position.copy(), p.direction)), this.score);
+        return new Reindeer(this.position.copy(), this.direction, [...this.takenPathsArray], this.score);
     }
 
     private canMoveForward(grid: CellEnum[][]) {
