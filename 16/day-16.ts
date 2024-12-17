@@ -255,31 +255,28 @@ class Maze {
         const scores: number[] = [];
         while (this.reindeers.length > 0) {
             const reindeer = this.reindeers.shift()!;
-            if (this.reachedEndPosition(reindeer)) {
-                scores.push(reindeer.score);
-                console.log(`Reached end position with score ${reindeer.score}`);
-                reindeer.displayPath(this);
+            const directionOptions = reindeer.findOptions(this.grid);
+            if (directionOptions.length === 0) {
+                // console.log(`Dead end at position (${reindeer.position.x}, ${reindeer.position.y}) with direction ${reindeer.direction}`);
             } else {
-                const directionOptions = reindeer.findOptions(this.grid);
-                if (directionOptions.length === 0) {
-                    // console.log(`Dead end at position (${reindeer.position.x}, ${reindeer.position.y}) with direction ${reindeer.direction}`);
-                } else {
-                    for (const directionOption of directionOptions) {
-                        const newReindeer = reindeer.copy();
-                        newReindeer.rotateTo(directionOption);
-                        newReindeer.moveForward(this.grid);
-                        if (scores.length === 0 || newReindeer.score < Math.min(...scores)) {
-                            if (nbLoops % 10000 === 0) {
-                                console.log(`Reindeer is at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
-                                // newReindeer.displayPath(this);
-                            }
-                            this.reindeers.push(newReindeer);
-                        } else {
-                            console.log(`Search stopped with score ${newReindeer.score} at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction}`);
+                for (const directionOption of directionOptions) {
+                    const newReindeer = reindeer.copy();
+                    newReindeer.rotateTo(directionOption);
+                    newReindeer.moveForward(this.grid);
+                    if (this.reachedEndPosition(reindeer)) {
+                        scores.push(reindeer.score);
+                        console.log(`Reached end position with score ${reindeer.score}`);
+                        // reindeer.displayPath(this);
+                    } else if (scores.length === 0 || newReindeer.score < Math.min(...scores)) {
+                        if (nbLoops % 10000 === 0) {
+                            console.log(`Reindeer is at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
+                            // newReindeer.displayPath(this);
                         }
+                        this.reindeers.push(newReindeer);
+                    } else {
+                        console.log(`Search stopped with score ${newReindeer.score} at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction}`);
                     }
                 }
-
             }
             nbLoops++;
         }
