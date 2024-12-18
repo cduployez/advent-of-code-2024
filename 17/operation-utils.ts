@@ -9,4 +9,11 @@ export class OperationUtils {
         return value1 ^ value2;
     }
 
+    static fromBinaryString(value: string): number {
+        return parseInt(value, 2);
+    }
+
+    static toBinaryString(value: number): string {
+        return value.toString(2);
+    }
 }
