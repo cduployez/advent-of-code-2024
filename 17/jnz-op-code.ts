@@ -10,16 +10,16 @@ import {Result} from './result';
  * if this instruction jumps, the instruction pointer is not increased by 2 after this instruction.
  */
 export class JnzOpCode extends Opcode {
-    constructor(opcodeValue: number, operandValue: number, registers: Record<RegisterEnum, number>) {
+    constructor(opcodeValue: bigint, operandValue: bigint, registers: Record<RegisterEnum, bigint>) {
         super(opcodeValue, operandValue, registers);
     }
 
-    override toOperand(operandValue: number, registers: Record<RegisterEnum, number>): Operand {
+    override toOperand(operandValue: bigint, registers: Record<RegisterEnum, bigint>): Operand {
         return OperandFactory.toLiteralOperand(operandValue);
     }
 
-    override run(registers: Record<RegisterEnum, number>): Result {
-        if (registers[RegisterEnum.A] === 0) {
+    override run(registers: Record<RegisterEnum, bigint>): Result {
+        if (registers[RegisterEnum.A] === 0n) {
             return new Result(null, null);
         }
         return new Result(null, this.operand.value);

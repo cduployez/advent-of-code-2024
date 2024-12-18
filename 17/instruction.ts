@@ -7,11 +7,11 @@ import {OpCodeFactory} from './op-code-factory';
 export class Instruction {
     opcode: Opcode;
 
-    constructor(opcode: number, operand: number, registers: Record<RegisterEnum, number>) {
+    constructor(opcode: bigint, operand: bigint, registers: Record<RegisterEnum, bigint>) {
         this.opcode = OpCodeFactory.create(opcode, operand, registers);
     }
 
-    run(registers: Record<RegisterEnum, number>): Result {
+    run(registers: Record<RegisterEnum, bigint>): Result {
         return this.opcode.run(registers);
     }
 }

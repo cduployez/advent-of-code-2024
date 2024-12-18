@@ -1,9 +1,9 @@
 export abstract class Operand {
-    protected operandValue: number;
+    protected operandValue: bigint;
 
-    constructor(value: number) {
+    constructor(value: bigint) {
         this.operandValue = value;
     }
 
-    abstract get value(): number;
+    abstract get value(): bigint;
 }

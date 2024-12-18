@@ -1,11 +1,11 @@
 import {Operand} from './operand';
 
 export class LiteralOperand extends Operand {
-    constructor(operandValue: number) {
+    constructor(operandValue: bigint) {
         super(operandValue);
     }
 
-    get value(): number {
+    get value(): bigint {
         return this.operandValue;
     }
 }

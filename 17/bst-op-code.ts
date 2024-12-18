@@ -9,16 +9,16 @@ import {Result} from './result';
  * then writes that value to the B register.
  */
 export class BstOpCode extends Opcode {
-    constructor(opcodeValue: number, operandValue: number, registers: Record<RegisterEnum, number>) {
+    constructor(opcodeValue: bigint, operandValue: bigint, registers: Record<RegisterEnum, bigint>) {
         super(opcodeValue, operandValue, registers);
     }
 
-    override toOperand(operandValue: number, registers: Record<RegisterEnum, number>): Operand {
+    override toOperand(operandValue: bigint, registers: Record<RegisterEnum, bigint>): Operand {
         return OperandFactory.toComboOperand(operandValue, registers);
     }
 
-    override run(registers: Record<RegisterEnum, number>): Result {
-        registers[RegisterEnum.B] = this.operand.value % 8;
+    override run(registers: Record<RegisterEnum, bigint>): Result {
+        registers[RegisterEnum.B] = this.operand.value % 8n;
         return new Result(null, null);
     }
 }

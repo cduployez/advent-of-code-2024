@@ -9,15 +9,15 @@ import {Result} from './result';
  * (If a program outputs multiple values, they are separated by commas.)
  */
 export class OutOpCode extends Opcode {
-    constructor(opcodeValue: number, operandValue: number, registers: Record<RegisterEnum, number>) {
+    constructor(opcodeValue: bigint, operandValue: bigint, registers: Record<RegisterEnum, bigint>) {
         super(opcodeValue, operandValue, registers);
     }
 
-    override toOperand(operandValue: number, registers: Record<RegisterEnum, number>): Operand {
+    override toOperand(operandValue: bigint, registers: Record<RegisterEnum, bigint>): Operand {
         return OperandFactory.toComboOperand(operandValue, registers);
     }
 
-    override run(registers: Record<RegisterEnum, number>): Result {
-        return new Result(this.operand.value % 8, null);
+    override run(registers: Record<RegisterEnum, bigint>): Result {
+        return new Result(this.operand.value % 8n, null);
     }
 }

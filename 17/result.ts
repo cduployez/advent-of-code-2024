@@ -1,8 +1,8 @@
 export class Result {
-    output: number | null;
-    jump: number | null;
+    output: bigint | null;
+    jump: bigint | null;
 
-    constructor(output: number | null, jump: number | null) {
+    constructor(output: bigint | null, jump: bigint | null) {
         this.output = output;
         this.jump = jump;
     }

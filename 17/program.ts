@@ -1,32 +1,43 @@
 import {RegisterEnum} from './register-enum';
 import {Instruction} from './instruction';
+import {Result} from './result';
 
 export class Program {
-    values: number[];
-    registers: Record<RegisterEnum, number> = {
-        [RegisterEnum.A]: 0,
-        [RegisterEnum.B]: 0,
-        [RegisterEnum.C]: 0
-    };
+    values: bigint[];
+    registers: Record<RegisterEnum, bigint>;
 
-    constructor(values: number[], registers: Partial<Record<RegisterEnum, number>>) {
+    constructor(values: bigint[], registers: Record<RegisterEnum, bigint>) {
         this.values = values;
-        this.registers = {...this.registers, ...registers};
+        this.registers = registers;
     }
 
-    run(): number[] {
-        const outputs: number[] = [];
-        let i = 0;
-        while (i < this.values.length - 1) {
-            console.log(`${this.values[i]},${this.values[i + 1]} (${JSON.stringify(this.registers)})`);
-            const result = new Instruction(this.values[i], this.values[i + 1], this.registers).run(this.registers);
-            console.log(`${this.values[i]},${this.values[i + 1]} => ${JSON.stringify(result)} (${JSON.stringify(this.registers)})`);
+    toDisplayRegister(): string {
+        return `A=${this.registers.A}, B=${this.registers.B}, C=${this.registers.C}`;
+    }
+
+    run(): bigint[] {
+        const outputs: bigint[] = [];
+        let pointer: bigint = 0n;
+        while (pointer < this.values.length - 1) {
+            const index: number = Number(pointer);
+            this.display(index);
+            const result: Result = new Instruction(this.values[index], this.values[index + 1], this.registers).run(this.registers);
             if (result.output !== null) {
                 outputs.push(result.output);
             }
-            i = result.jump !== null ? result.jump : i + 2;
+            this.displayResult(index, result, outputs);
+            pointer = result.jump !== null ? result.jump : pointer + 2n;
+            console.log('----------------');
         }
-        console.log(`i ${i}`);
         return outputs;
+    }
+
+    private displayResult(index: number, result: Result, outputs: bigint[]): void {
+        console.log(`(${this.values[index]}, ${this.values[index + 1]}), Output=${result.output}, Jump=${result.jump}, ${this.toDisplayRegister()} Outputs=[${outputs.join(',')}]`);
+    }
+
+    display(index: number = 0): void {
+        console.log(`${this.values.map(v => Number(v)).join(',')} [${this.toDisplayRegister()}]`);
+        console.log(`${this.values.map((v, i) => i === index ? '^': ' ').join(' ')}`);
     }
 }

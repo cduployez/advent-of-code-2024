@@ -1,11 +1,11 @@
 export class OperationUtils {
 
-    static dv(operandValue: number, registerValue: number): number {
-        const denominator = Math.pow(2, operandValue);
-        return Math.trunc(registerValue / denominator);
+    static dv(operandValue: bigint, registerValue: bigint): bigint {
+        const denominator = 2n ** operandValue;
+        return registerValue / denominator;
     }
 
-    static xor(value1: number, value2: number): number {
+    static xor(value1: bigint, value2: bigint): bigint {
         return value1 ^ value2;
     }
 
