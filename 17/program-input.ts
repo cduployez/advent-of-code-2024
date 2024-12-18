@@ -21,7 +21,7 @@ export class ProgramInput extends Input<Program> {
             const prefix: string = `Register ${key}: `;
             const value = registerLines.find(l => l.startsWith(prefix))?.split(prefix)[1];
             registers[key] = value ? BigInt(value) : 0n;
-            console.log(`Register ${key} has value ${registers[key]}`);
+            // console.log(`Register ${key} has value ${registers[key]}`);
         });
         return registers;
     }

@@ -20,14 +20,14 @@ export class Program {
         let pointer: bigint = 0n;
         while (pointer < this.values.length - 1) {
             const index: number = Number(pointer);
-            this.display(index);
+            // this.display(index);
             const result: Result = new Instruction(this.values[index], this.values[index + 1], this.registers).run(this.registers);
             if (result.output !== null) {
                 outputs.push(result.output);
             }
-            this.displayResult(index, result, outputs);
+            // this.displayResult(index, result, outputs);
             pointer = result.jump !== null ? result.jump : pointer + 2n;
-            console.log('----------------');
+            // console.log('----------------');
         }
         return outputs;
     }

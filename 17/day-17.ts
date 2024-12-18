@@ -9,8 +9,20 @@ export class Day17 {
         return outputs.join(',');
     }
 
-    static part2(inputFilePath: string): string {
-        return '0';
+    static part2(inputFilePath: string, startIndex: number = 0): string {
+        let program = new ProgramInput(inputFilePath).parse();
+        program.display();
+        const expectedOutput: string = program.values.map(value => value.toString()).join(',');
+        let aValue: bigint = BigInt(startIndex) - 1n;
+        let output: string = '';
+        do {
+            aValue++;
+            program = new ProgramInput(inputFilePath).parse();
+            program.registers.A = aValue;
+            console.log('A:', aValue);
+            output = program.run().map(value => value.toString()).join(',');
+        } while (output !== expectedOutput);
+        return aValue.toString();
     }
 }
 
@@ -21,10 +33,11 @@ const startTime = performance.now();
 // console.log('Part 1 - Example4: ', Day17.part1('example-input4.txt')); // 4,2,5,6,7,7,7,7,3,1,0
 // console.log('Part 1 - Example5: ', Day17.part1('example-input5.txt')); // Sets register B to 26
 // console.log('Part 1 - Example6: ', Day17.part1('example-input6.txt')); // Sets register B to 44354
-console.log('Part 1 - Puzzle: ', Day17.part1('puzzle-input.txt')); // 3,1,5,3,7,4,2,7,5
+// console.log('Part 1 - Puzzle: ', Day17.part1('puzzle-input.txt')); // 3,1,5,3,7,4,2,7,5
 
+// console.log('Part 2 - Example7: ', Day17.part2('example-input7.txt')); // 117440
 // console.log('Part 2 - Example: ', Day17.part2('example-input.txt')); //
-// console.log('Part 2 - Puzzle: ', Day17.part2('puzzle-input.txt')); //
+console.log('Part 2 - Puzzle: ', Day17.part2('puzzle-input.txt', 6771182)); //
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
