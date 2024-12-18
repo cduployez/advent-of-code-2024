@@ -19,7 +19,7 @@ enum DirectionEnum {
 const DIRECTIONS = [DirectionEnum.EAST, DirectionEnum.SOUTH, DirectionEnum.WEST, DirectionEnum.NORTH];
 
 class Cache {
-    static takenPathScores: number[][] = [];
+    static takenPaths: ScoredPath[][][] = [];
 }
 
 class Path {
@@ -30,6 +30,15 @@ class Path {
     constructor(position: Position, direction: DirectionEnum) {
         this.position = position.copy();
         this.direction = direction;
+    }
+}
+
+class ScoredPath extends Path {
+    score: number;
+
+    constructor(position: Position, direction: DirectionEnum, score: number) {
+        super(position, direction);
+        this.score = score;
     }
 }
 
@@ -267,12 +276,18 @@ class Maze {
         lines.forEach(l => console.log(l.join('')));
     }
 
-    findPaths(): number[] {
+    findPaths(): Reindeer[] {
         let nbLoops: number = 0;
-        const scores: number[] = [];
+        const winningReindeers: Reindeer[] = [];
         while (this.reindeers.length > 0) {
             const reindeer = this.reindeers.pop()!;
-            const directionOptions = reindeer.findOptions(this.grid);
+            // reindeer.displayPath(this);
+            let directionOptions = reindeer.findOptions(this.grid);
+            while(directionOptions.length === 1 && !this.reachedEndPosition(reindeer)) {
+                reindeer.rotateTo(directionOptions[0]);
+                reindeer.moveForward(this.grid);
+                directionOptions = reindeer.findOptions(this.grid);
+            }
             if (directionOptions.length === 0) {
                 // console.log(`Dead end at position (${reindeer.position.x}, ${reindeer.position.y}) with direction ${reindeer.direction}`);
             } else {
@@ -280,18 +295,19 @@ class Maze {
                     const newReindeer = reindeer.copy();
                     newReindeer.rotateTo(directionOption);
                     newReindeer.moveForward(this.grid);
+                    // newReindeer.displayPath(this);
                     if (this.reachedEndPosition(reindeer)) {
-                        scores.push(reindeer.score);
+                        winningReindeers.push(reindeer);
                         console.log(`Reached end position with score ${reindeer.score}`);
                         // reindeer.displayPath(this);
-                    } else if (Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x] !== null && newReindeer.score >= Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x]) {
-                        console.log(`Giving up path at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}, which is higher than current score ${Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x]}`);
-                    } else if (scores.length === 0 || newReindeer.score < Math.min(...scores)) {
+                    } else if (this.shouldGiveUpForPath(newReindeer)) {
+                        console.log(`Giving up path at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
+                    } else if (winningReindeers.length === 0 || newReindeer.score <= Math.min(...winningReindeers.map(r => r.score))) {
                         if (nbLoops % 10000 === 0) {
                             console.log(`Reindeer is at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
                             // newReindeer.displayPath(this);
                         }
-                        Cache.takenPathScores[newReindeer.position.y][newReindeer.position.x] = newReindeer.score;
+                        Cache.takenPaths[newReindeer.position.y][newReindeer.position.x].push(new ScoredPath(newReindeer.position, reindeer.direction, newReindeer.score));
                         this.reindeers.push(newReindeer);
                     } else {
                         console.log(`Search stopped with score ${newReindeer.score} at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction}`);
@@ -300,11 +316,31 @@ class Maze {
             }
             nbLoops++;
         }
-        return scores;
+        const minScore = Math.min(...winningReindeers.map(r => r.score));
+        return winningReindeers.filter(r => r.score === minScore);
+    }
+
+    displaySeats(paths: Path[]): void {
+        const grid: string[][] = this.grid.map(row => row.map(cell => cell));
+        grid[this.startPosition.y][this.startPosition.x] = CellEnum.START;
+        grid[this.endPosition.y][this.endPosition.x] = CellEnum.END;
+        for (const path of paths) {
+            grid[path.position.y][path.position.x] = 'O';
+        }
+        console.log('');
+        grid.forEach(row => console.log(row.join('')));
     }
 
     private reachedEndPosition(reindeer: Reindeer) {
         return reindeer.position.x === this.endPosition.x && reindeer.position.y === this.endPosition.y;
+    }
+
+    private shouldGiveUpForPath(reindeer: Reindeer): boolean {
+        const scoredPaths = Cache.takenPaths[reindeer.position.y][reindeer.position.x].filter(p => p.position.x === reindeer.position.x && p.position.y === reindeer.position.y && p.direction === reindeer.direction);
+        if (scoredPaths.length > 0) {
+            return reindeer.score > Math.min(...scoredPaths.map(p => p.score));
+        }
+        return false;
     }
 }
 
@@ -329,7 +365,7 @@ class MazeInput extends Input<Maze> {
             });
             grid.push(row);
         });
-        Cache.takenPathScores = grid.map(row => row.map(() => Infinity));
+        Cache.takenPaths = grid.map(row => row.map(() => []));
         return new Maze(grid, startPosition!, endPosition!, DirectionEnum.EAST);
     }
 }
@@ -338,21 +374,34 @@ class Day16 {
     static part1(inputFilePath: string): number {
         const maze = new MazeInput(inputFilePath).parse();
         maze.displayMaze();
-        const scores = maze.findPaths();
-        return Math.min(...scores);
+        const winningReindeers = maze.findPaths();
+        winningReindeers[0].displayPath(maze);
+        return winningReindeers[0].score;
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const maze = new MazeInput(inputFilePath).parse();
+        maze.displayMaze();
+        const winningReindeers = maze.findPaths();
+        let paths: Path[] = winningReindeers.map(r => r.takenPathsArray).flat().flat();
+        // Add start position
+        paths.push(new Path(maze.startPosition.copy(), DirectionEnum.EAST));
+        // Add end position
+        paths.push(new Path(maze.endPosition.copy(), DirectionEnum.EAST));
+        // Filter non unique
+        paths = paths.filter((path, index, self) => self.findIndex(p => p.position.x === path.position.x && p.position.y === path.position.y) === index);
+        maze.displaySeats(paths);
+        return paths.length;
     }
 }
 
 const startTime = performance.now();
 // console.log('Part 1 - Example: ', Day16.part1('example-input.txt')); // 7036
 // console.log('Part 1 - Example2: ', Day16.part1('example-input2.txt')); // 11048
-console.log('Part 1 - Puzzle: ', Day16.part1('puzzle-input.txt')); //
-// console.log('Part 2 - Example: ', Day16.part2('example-input.txt')); //
-// console.log('Part 2 - Puzzle: ', Day16.part2('puzzle-input.txt')); //
+// console.log('Part 1 - Puzzle: ', Day16.part1('puzzle-input.txt')); // 99460
+// console.log('Part 2 - Example: ', Day16.part2('example-input.txt')); // 45
+// console.log('Part 2 - Example2: ', Day16.part2('example-input2.txt')); // 64
+console.log('Part 2 - Puzzle: ', Day16.part2('puzzle-input.txt')); //
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
