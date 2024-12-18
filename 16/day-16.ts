@@ -276,7 +276,7 @@ class Maze {
         lines.forEach(l => console.log(l.join('')));
     }
 
-    findPaths(): Reindeer[] {
+    findPaths(minScore: number = Infinity): Reindeer[] {
         let nbLoops: number = 0;
         const winningReindeers: Reindeer[] = [];
         while (this.reindeers.length > 0) {
@@ -299,8 +299,9 @@ class Maze {
                     if (this.reachedEndPosition(reindeer)) {
                         winningReindeers.push(reindeer);
                         console.log(`Reached end position with score ${reindeer.score}`);
+                        minScore = Math.min(minScore, reindeer.score);
                         // reindeer.displayPath(this);
-                    } else if (this.shouldGiveUpForPath(newReindeer)) {
+                    } else if (this.shouldGiveUpForPath(newReindeer, minScore)) {
                         console.log(`Giving up path at position (${newReindeer.position.x}, ${newReindeer.position.y}) with direction ${newReindeer.direction} and score ${newReindeer.score}`);
                     } else if (winningReindeers.length === 0 || newReindeer.score <= Math.min(...winningReindeers.map(r => r.score))) {
                         if (nbLoops % 10000 === 0) {
@@ -316,7 +317,7 @@ class Maze {
             }
             nbLoops++;
         }
-        const minScore = Math.min(...winningReindeers.map(r => r.score));
+        minScore = Math.min(...winningReindeers.map(r => r.score));
         return winningReindeers.filter(r => r.score === minScore);
     }
 
@@ -335,7 +336,10 @@ class Maze {
         return reindeer.position.x === this.endPosition.x && reindeer.position.y === this.endPosition.y;
     }
 
-    private shouldGiveUpForPath(reindeer: Reindeer): boolean {
+    private shouldGiveUpForPath(reindeer: Reindeer, minScore: number): boolean {
+        if (reindeer.score > minScore) {
+            return true;
+        }
         const scoredPaths = Cache.takenPaths[reindeer.position.y][reindeer.position.x].filter(p => p.position.x === reindeer.position.x && p.position.y === reindeer.position.y && p.direction === reindeer.direction);
         if (scoredPaths.length > 0) {
             return reindeer.score > Math.min(...scoredPaths.map(p => p.score));
@@ -379,10 +383,10 @@ class Day16 {
         return winningReindeers[0].score;
     }
 
-    static part2(inputFilePath: string): number {
+    static part2(inputFilePath: string, minScore: number): number {
         const maze = new MazeInput(inputFilePath).parse();
         maze.displayMaze();
-        const winningReindeers = maze.findPaths();
+        const winningReindeers = maze.findPaths(minScore);
         let paths: Path[] = winningReindeers.map(r => r.takenPathsArray).flat().flat();
         // Add start position
         paths.push(new Path(maze.startPosition.copy(), DirectionEnum.EAST));
@@ -399,9 +403,9 @@ const startTime = performance.now();
 // console.log('Part 1 - Example: ', Day16.part1('example-input.txt')); // 7036
 // console.log('Part 1 - Example2: ', Day16.part1('example-input2.txt')); // 11048
 // console.log('Part 1 - Puzzle: ', Day16.part1('puzzle-input.txt')); // 99460
-// console.log('Part 2 - Example: ', Day16.part2('example-input.txt')); // 45
-// console.log('Part 2 - Example2: ', Day16.part2('example-input2.txt')); // 64
-console.log('Part 2 - Puzzle: ', Day16.part2('puzzle-input.txt')); //
+// console.log('Part 2 - Example: ', Day16.part2('example-input.txt', 7036)); // 45
+// console.log('Part 2 - Example2: ', Day16.part2('example-input2.txt', 11048)); // 64
+console.log('Part 2 - Puzzle: ', Day16.part2('puzzle-input.txt', 99460)); // 500
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
