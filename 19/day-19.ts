@@ -14,6 +14,14 @@ class StripeManager {
         return this.desiredDesigns.map(desiredDesign => this.checkRecursive(desiredDesign));
     }
 
+    searchAll(): Record<string, number> {
+        const result: Record<string, number> = {};
+        for (let desiredDesign of this.desiredDesigns) {
+            result[desiredDesign] = this.searchRecursive(desiredDesign);
+        }
+        return result;
+    }
+
     checkRecursive(desiredDesign: string, foundStripes: string = '', level: number = 0): boolean {
         if (level === 0) {
             console.log('Desired design:', desiredDesign);
@@ -36,6 +44,23 @@ class StripeManager {
         }
         return found;
     }
+
+    searchRecursive(desiredDesign: string, foundStripes: string = '', cache: Map<string, number> = new Map()): number {
+        if (desiredDesign == foundStripes || desiredDesign.length === 0) {
+            return 1;
+        }
+        if (cache.has(foundStripes)) {
+            return cache.get(foundStripes)!;
+        }
+        let found = 0;
+        for (let towelPattern of this.towelPatterns) {
+            if (desiredDesign.startsWith(foundStripes + towelPattern)) {
+                found += this.searchRecursive(desiredDesign, foundStripes + towelPattern, cache);
+            }
+        }
+        cache.set(foundStripes, found);
+        return found;
+    }
 }
 
 class StripeManagerInput extends Input<StripeManager> {
@@ -53,27 +78,19 @@ class Day19 {
     }
 
     static part2(inputFilePath: string): number {
-        return 0;
+        const stripeManager = new StripeManagerInput(inputFilePath).parse();
+        console.log('Stripe manager:', stripeManager);
+        const result = stripeManager.searchAll();
+        console.log('Result:', result);
+        return Object.values(result).reduce((acc, value) => acc + value, 0);
     }
 }
 
 const startTime = performance.now();
 // console.log('Part 1 - Example: ', Day19.part1('example-input.txt')); // 6
-console.log('Part 1 - Puzzle: ', Day19.part1('puzzle-input.txt')); // 228
+// console.log('Part 1 - Puzzle: ', Day19.part1('puzzle-input.txt')); // 228
 // console.log('Part 2 - Example: ', Day19.part2('example-input.txt')); // 16
-/*
-{
-  brwrr: 2,
-  bggr: 1,
-  gbbr: 4,
-  rrbgbr: 6,
-  ubwu: 0,
-  bwurrg: 1,
-  brgr: 2,
-  bbrgwb: 0
-}
- */
-// console.log('Part 2 - Puzzle: ', Day19.part2('puzzle-input.txt')); //
+console.log('Part 2 - Puzzle: ', Day19.part2('puzzle-input.txt')); //
 const endTime = performance.now();
 console.log(`Call to method took ${endTime - startTime} milliseconds`);
 
